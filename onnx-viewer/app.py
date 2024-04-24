@@ -125,7 +125,8 @@ class VideoThread(QThread):
 
     def run(self):
         # cap = cv.VideoCapture(int(self.path))
-        cap = cv.VideoCapture('D:\\dis\\test-data\\test2-video.mp4')
+        cap = cv.VideoCapture(0)
+        # cap = cv.VideoCapture('D:\\dis\\test-data\\test2-video.mp4')
 
         self.detector = YOLOv8("models/" + self.model_name,
                                self.conf,
