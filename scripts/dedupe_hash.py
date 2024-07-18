@@ -13,24 +13,19 @@ for group in split_group_list:
     hashes = set()
     
     del_num = 0
-    # в датасете есть дубликаты с другим именем изображения
     for filename in os.listdir(directory):
         path = os.path.join(directory, filename)
         
-        #хэшируем image
         digest = hashlib.sha1(open(path,'rb').read()).digest()
         
         if digest not in hashes:
-            # если не дубликат, то добавляем в hashes
             hashes.add(digest)
         
         else:
-            # удаляем image
             os.remove(path)
             
             label_name = filename.replace('.jpg','.txt')
             label_path = f'{dataset_path}/labels/{label_name}'
-            # удаляем label
             os.remove(label_path)
             
             del_num += 1

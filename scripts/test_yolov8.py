@@ -10,10 +10,10 @@ labels_files = os.listdir("labels")
 random.shuffle(labels_files)
 
 for file in labels_files:
-    image = cv2.imread('./images/' + file.split('.')[0] + ".jpg")
+    frame = cv2.imread('./images/' + file.split('.')[0] + ".jpg")
 
-    image_w = image.shape[1]
-    image_h = image.shape[0]
+    image_w = frame.shape[1]
+    image_h = frame.shape[0]
     labels = open("./labels/" + file).readlines()
 
     print(file)
@@ -28,7 +28,7 @@ for file in labels_files:
         max_x = int(float(label[1]) * image_w + w/2)
         max_y = int(float(label[2]) * image_h + h/2)
 
-        frame = cv2.rectangle(image, (min_x, min_y), (max_x, max_y), (0, 0, 255),  2) 
+        frame = cv2.rectangle(frame, (min_x, min_y), (max_x, max_y), (0, 0, 255),  2) 
 
     cv2.imshow("Detected Objects", frame)
     # time.sleep(1)

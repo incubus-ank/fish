@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 #   Developed by Alexander Kraynikov krajnikov.a@edu.narfu.ru
+
 import os
 import sys
 
@@ -89,12 +90,13 @@ class Track:
 class VideoThread(QThread):
     change_pixmap_signal = pyqtSignal(np.ndarray)
 
-    def __init__(self, model_name, conf, iuo, path=0, record=False):
+    def __init__(self, model_name, conf, iuo, fish_counter, path='0', record=False):
         self.model_name = model_name
         self.conf = conf
         self.iuo = iuo
         self.record = record
         self.path = path
+        self.fish_counter = fish_counter
 
         self.colors = [(random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)) for j in range(20)]
         self.count = 0
@@ -113,7 +115,7 @@ class VideoThread(QThread):
         self.tracker = Tracker(max_cosine_distance, max_iou_distance, max_age, n_init)
 
         if self.record:
-            fourcc = cv.VideoWriter_fourcc(*'XVID')
+            fourcc = cv.VideoWriter_fourcc(*'mp4v')
             self.out = cv.VideoWriter("./videos/" + \
                                     time.strftime("%Y-%m-%d_%H-%M-%S") + \
                                     ".mp4",  
@@ -124,9 +126,12 @@ class VideoThread(QThread):
         self.is_run = True
 
     def run(self):
-        # cap = cv.VideoCapture(int(self.path))
-        cap = cv.VideoCapture(0)
-        # cap = cv.VideoCapture('D:\\dis\\test-data\\test2-video.mp4')
+        if self.path[0] == '0':
+            cap = cv.VideoCapture(0)
+        else:
+            cap = cv.VideoCapture(self.path)
+        # test_video.mp4
+        # cap = cv.VideoCapture('D:\\dis\\test-data\\Fish Doorbell.mov')
 
         self.detector = YOLOv8("models/" + self.model_name,
                                self.conf,
@@ -151,7 +156,8 @@ class VideoThread(QThread):
                     class_id = int(class_id)
                     if score > self.conf:
                         detections.append([x1, y1, x2, y2, score])
-                print(self.fishcounter)
+                # print(self.fishcounter)
+                self.fish_counter.setText("fish counted: " + str(self.fishcounter))
 
                 self.tracker.update(frame, detections)
 
@@ -175,7 +181,7 @@ class VideoThread(QThread):
                     frame = cv.putText(frame, str(track_id), (int(x1), int(y1) - 30), self.font,  
                         1, self.colors[track_id % len(self.colors)], self.thickness, cv.LINE_AA) 
                     cv.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (self.colors[track_id % len(self.colors)]), 2)
-                    
+                
 
                 if self.record:
                     # print("record")
@@ -199,9 +205,13 @@ class App(QWidget):
         self.select_model.addItems(os.listdir("models"))
         self.select_model.currentIndexChanged.connect(self.changemodel)
 
+        self.fish_counter = QLabel()
+        self.fish_counter.setText("0")
+
         self.thread = VideoThread(os.listdir("models")[0],
                                   0.7,
-                                  0.5)
+                                  0.5,
+                                  fish_counter=self.fish_counter)
         self.thread.change_pixmap_signal.connect(self.update_image)
         self.thread.start()
 
@@ -222,7 +232,7 @@ class App(QWidget):
         self.label_confidence.setText("confidence:")
         self.line_confidence = QLineEdit()
         self.line_confidence.setValidator(QDoubleValidator(0.01,1.00,2))
-        self.line_confidence.setText("0.70")
+        self.line_confidence.setText("0.30")
 
         self.label_iuo = QLabel()
         self.label_iuo.setText("iuo:")
@@ -247,6 +257,7 @@ class App(QWidget):
         self.vbox.addWidget(self.line_iuo)
         self.vbox.addWidget(self.label_path)
         self.vbox.addWidget(self.line_path)
+        self.vbox.addWidget(self.fish_counter)
         self.vbox.addWidget(self.button_change)
         self.vbox.addStretch()
 
@@ -259,14 +270,14 @@ class App(QWidget):
         self.changemodel()
 
     def changemodel(self):
-        self.line_iuo.text
 
         self.thread.stop()
-        self.thread = VideoThread(self.select_model.currentText(),
-                                  float(self.line_confidence.text()),
-                                  float(self.line_iuo.text()),
-                                  self.record,
-                                  self.line_path.text())
+        self.thread = VideoThread(model_name=self.select_model.currentText(),
+                                  conf=float(self.line_confidence.text()),
+                                  iuo=float(self.line_iuo.text()),
+                                  path=str(self.line_path.text()),
+                                  record=self.record,
+                                  fish_counter=self.fish_counter)
         self.thread.change_pixmap_signal.connect(self.update_image)
         self.thread.start()
 
