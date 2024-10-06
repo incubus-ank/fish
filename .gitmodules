@@ -1,0 +1,3 @@
+[submodule "onnx-viewer/deep_sort"]
+	path = onnx-viewer/deep_sort
+	url = https://github.com/IrinaVasendina/deep_sort.git
